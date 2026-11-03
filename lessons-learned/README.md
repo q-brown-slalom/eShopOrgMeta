@@ -12,4 +12,4 @@ misbehavior, tooling gotchas. Agents check this folder before working in an affe
 
 | Date | Title | Area | Tags |
 |------|-------|------|------|
-| — | — | — | — |
+| 2026-11-03 | [Windows PowerShell read/write corrupts UTF-8 Markdown](2026-11-03-powershell-utf8-mojibake.md) | Agent tooling | encoding, powershell, agents, markdown |

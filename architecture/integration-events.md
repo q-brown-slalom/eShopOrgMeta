@@ -1,7 +1,7 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-02
+last_reviewed: 2026-11-03
 source: eShop/src/*/Extensions/Extensions.cs (AddSubscription), eShop/src/PaymentProcessor/Program.cs
 ---
 
@@ -47,3 +47,16 @@ stateDiagram-v2
 Rules enforced by the aggregate: cannot cancel once `Paid` or `Shipped`; can only ship from `Paid`.
 
 When adding or changing an event, update this file in the same spec/PR.
+
+## Proposed events
+
+From the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md). Status: **Proposed**; move into the table above when implemented.
+
+| Event | Publisher | Consumers |
+|-------|-----------|-----------|
+| `BusinessRulesSnapshotPublishedIntegrationEvent` | BusinessRules.API (planned) | Ordering.API, WebApp |
+| `OrderPricedIntegrationEvent` | Ordering.API | BusinessRules.API (planned) |
+
+Proposed changes to existing events: BusinessRules.API also consumes `OrderStatusChangedToPaidIntegrationEvent`,
+`OrderStatusChangedToShippedIntegrationEvent`, and `OrderStatusChangedToCancelledIntegrationEvent`;
+`OrderStatusChangedToPaidIntegrationEvent.OrderStockItems` excludes unfulfillable lines (partial fulfilment).

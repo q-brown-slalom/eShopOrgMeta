@@ -67,13 +67,24 @@ first admin-app spec decides the final set.
 | WHK-001 | Subscribable event types | `CatalogItemPriceChange`, `OrderShipped`, `OrderPaid` | Code — `Webhooks.API/Model/WebhookType.cs` | Webhooks.API | Yes — enable/disable existing types; new types need a spec |
 | WHK-002 | Grant URL must be absolute, same origin as hook URL, and echo the `X-eshop-whtoken` token on OPTIONS | — | Code — `WebhookSubscriptionRequest.cs`, `GrantUrlTesterService.cs` | Webhooks.API | No (security) |
 
+## Pricing and fulfilment (Proposed)
+
+Status: **Proposed** by the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md).
+That spec also moves ORD-001 (per order, 1–60 min) and ORD-013 (adds `PartialFulfilment`) to the runtime rule store. Update the rows above when it is implemented.
+
+| ID | Rule | Default | Mechanism / location | Enforced by | Admin candidate |
+|----|------|---------|----------------------|-------------|-----------------|
+| PRC-001 | Price adjustment: percent off or fixed unit price, by catalog item, type, brand, or all | None (catalog price) | Runtime rule (planned BusinessRules.API) | Ordering.API pricing | Yes |
+| PRM-001 | Promotion: line or order discount when its conditions are met; the best single promotion per level wins | None | Runtime rule (planned) | Ordering.API pricing | Yes |
+| SHP-001 | Shipping fee with optional free-shipping threshold | 0 | Runtime rule (planned) | Ordering.API pricing | Yes |
+
 ## Known gaps (input for future specs)
 
 | ID | Gap |
 |----|-----|
-| G-01 | No pricing rules exist (promotions, tax, shipping fees). Discounts exist on order items but nothing sets them from business rules. |
+| G-01 | No pricing rules exist (promotions, tax, shipping fees). Discounts exist on order items but nothing sets them from business rules. Promotions and shipping fees are addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved); tax is not. |
 | G-02 | Catalog API has no maximum page size, so very large pages can be requested. |
-| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. |
+| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. Addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved). |
 | G-04 | `GrantUrlTesterService` logs the webhook token in plain text, which violates [standards/security.md](../standards/security.md). |
 | G-05 | `RestockThreshold` is stored, but no code compares stock to it. Nothing ever sets `OnReorder` to `true`; `AddStock` only resets it to `false`. The `CheckThreshold` mentioned in the `RemoveStock` docs doesn't exist. |
 | G-06 | Card data is stored in violation of PCI DSS: plain-text card number in `PaymentMethod` (`orderingdb`), and card number plus security code in `ApplicationUser` (`identitydb`). Fix: [ADR-0007](../decisions/0007-tokenize-card-data.md). |
