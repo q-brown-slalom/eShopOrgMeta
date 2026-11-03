@@ -8,7 +8,7 @@ created: 2026-11-03
 approved_by: ["Q Brown (2026-11-03)"]
 implemented_in: []       # links to merged product-repo PRs
 plan: "plans/cross-repo/2026-11-03-runtime-business-rules-and-experiments.md"
-adrs: ["ADR-0008 (to be written): runtime business rules service and in-house experimentation"]
+adrs: ["decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md"]
 ---
 
 # Runtime business rules and A/B experiments — Design
