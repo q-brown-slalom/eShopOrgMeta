@@ -1,0 +1,9 @@
+{
+  "folders": [
+    { "name": "eShopOrgMeta", "path": "." },
+    { "name": "eShop", "path": "../eShop" }
+  ],
+  "settings": {
+    "chat.useAgentsMdFile": true
+  }
+}
