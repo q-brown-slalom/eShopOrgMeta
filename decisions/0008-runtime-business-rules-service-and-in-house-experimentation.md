@@ -1,9 +1,3 @@
----
-status: Proposed
-owner: Q Brown
-last_reviewed: 2026-11-03
----
-
 # 0008. Runtime business rules service and in-house experimentation
 
 - Status: Proposed
