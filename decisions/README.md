@@ -13,3 +13,4 @@ Statuses: `Proposed` → `Accepted` → (`Deprecated` | `Superseded by NNNN`).
 | [0006](0006-tiered-order-retention.md) | Tiered order retention | Accepted (pending legal sign-off) |
 | [0007](0007-tokenize-card-data.md) | Tokenize card data via a payment provider | Accepted |
 | [0008](0008-runtime-business-rules-service-and-in-house-experimentation.md) | Runtime business rules service and in-house experimentation | Proposed |
+| [0009](0009-per-repo-apphost-with-external-services.md) | One AppHost per repo, linked with external services | Proposed |

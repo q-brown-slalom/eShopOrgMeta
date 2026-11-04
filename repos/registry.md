@@ -1,7 +1,7 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-02
+last_reviewed: 2026-11-04
 ---
 
 # Repo registry
@@ -14,7 +14,7 @@ column for `specs/<repo>/` and `plans/<repo>/`.
 | eShopOrgMeta | `{{TBD — remote not configured}}` | Active | Org memory, standards, specs, plans | Markdown, Copilot skills | Q Brown | — |
 | eShop | <https://github.com/dotnet/eShop> | Active (forked/owned) | Core commerce platform: services, storefront, mobile BFF | .NET 10, Aspire, Postgres, Redis, RabbitMQ | Q Brown | Multi-root workspace |
 | eShopOffering | — | Planned | Brand storefront for an additional offering, sharing eShop platform services | Expected: Blazor + WebAppComponents, Aspire | Q Brown | Multi-root workspace |
-| eShopAdmin | — | Planned | Admin web app for editing business rules | Expected: Blazor, Identity.API admin scope | Q Brown | Multi-root workspace |
+| eShopAdmin | `{{TBD — remote not configured}}` | Active | Admin web app for editing business rules ([ADR-0009](../decisions/0009-per-repo-apphost-with-external-services.md)) | Blazor Web App (static SSR), Aspire | Q Brown | Multi-root workspace |
 
 ## Adding a repo
 
