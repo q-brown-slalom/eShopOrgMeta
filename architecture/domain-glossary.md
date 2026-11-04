@@ -2,7 +2,7 @@
 status: Adopted
 owner: "Q Brown"
 last_reviewed: 2026-11-03
-source: eShop/src/Catalog.API/Model, eShop/src/Basket.API/Model, eShop/src/Ordering.Domain
+source: eShop/src/Catalog.API/Model, eShop/src/Basket.API/Model, eShop/src/Ordering.Domain, eShop/src/BusinessRules.API/Model, eShop/src/eShop.BusinessRules.Client
 ---
 
 # Domain glossary
@@ -29,6 +29,10 @@ Use these terms exactly in specs, code, and conversations. Add new terms when a 
 | Domain event | In-process event raised by an aggregate, handled via MediatR | Ordering |
 | Business rule | A named, ID'd policy that governs behavior (e.g. ORD-001 grace period). Catalogued in [business-rules-catalog.md](business-rules-catalog.md); admin-editable ones will be managed by the planned admin app | Owning service / admin app (planned) |
 | Offering | A brand storefront with its own web app (e.g. `eShopOffering`) that shares eShop platform services: catalog, basket, ordering, identity. Rules marked "per offering" (ORD-013, CAT-007) vary by offering | Offering web apps |
+| Rule type | Code-defined contract for a business rule: ID, typed parameters, allowed ranges, built-in default (`IRuleType` in `eShop.BusinessRules.Client`; no production rule types until phase 2) | BusinessRules.API |
+| Rule version | A published or draft value for a rule type, with effective-from/to dates and audit data (`RuleVersion`) | BusinessRules.API |
+| Rules snapshot | Immutable, versioned set of published rule versions (and, later, running experiments) that services evaluate locally (`RulesSnapshot`; stored as `RulesSnapshotRecord`) | BusinessRules.API |
+| Price quote | Server-computed prices for basket lines: base price, adjusted price, discounts, shipping fee, total (`PriceQuote`, `POST api/pricing/quote`) | Ordering.API |
 
 ## Proposed terms
 
@@ -36,10 +40,6 @@ Introduced by the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-r
 
 | Term | Meaning | Owned by |
 |------|---------|----------|
-| Rule type | Code-defined contract for a business rule: ID, typed parameters, allowed ranges, built-in default | BusinessRules.API (planned) |
-| Rule version | A published or draft value for a rule type, with effective-from/to dates and audit data | BusinessRules.API (planned) |
-| Rules snapshot | Immutable, versioned set of published rule versions and running experiments that services evaluate locally | BusinessRules.API (planned) |
-| Price quote | Server-computed prices for basket lines: base price, adjusted price, discounts, shipping fee, total | Ordering.API (planned) |
 | Promotion | A rule (PRM-001) that discounts a line or the order when its conditions are met | BusinessRules.API / Ordering.API (planned) |
 | Shipping fee | Fee added to an order (SHP-001), optionally waived above a free-shipping threshold | Ordering.API (planned) |
 | Stock shortfall policy | ORD-013 value fixed on each order: `AllOrNothing` or `PartialFulfilment` | Ordering.Domain (planned) |

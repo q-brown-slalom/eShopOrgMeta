@@ -2,7 +2,7 @@
 status: Adopted
 owner: "Q Brown"
 last_reviewed: 2026-11-03
-source: eShop/src/*/Extensions/Extensions.cs (AddSubscription), eShop/src/PaymentProcessor/Program.cs
+source: eShop/src/*/Extensions/Extensions.cs (AddSubscription), eShop/src/PaymentProcessor/Program.cs, eShop/src/BusinessRules.API/Services/RulePublishingService.cs
 ---
 
 # Integration events
@@ -25,6 +25,7 @@ Consumers are verified from `AddSubscription<...>()` registrations.
 | `OrderStatusChangedToShippedIntegrationEvent` | Ordering.API | Webhooks.API, WebApp |
 | `OrderStatusChangedToCancelledIntegrationEvent` | Ordering.API | WebApp |
 | `ProductPriceChangedIntegrationEvent` | Catalog.API | Webhooks.API |
+| `BusinessRulesSnapshotPublishedIntegrationEvent` | BusinessRules.API (on publish, via outbox) | Ordering.API (refreshes its rules snapshot cache) |
 
 ## Order lifecycle (Ordering.Domain `Order`)
 
@@ -54,9 +55,9 @@ From the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-bu
 
 | Event | Publisher | Consumers |
 |-------|-----------|-----------|
-| `BusinessRulesSnapshotPublishedIntegrationEvent` | BusinessRules.API (planned) | Ordering.API, WebApp |
 | `OrderPricedIntegrationEvent` | Ordering.API | BusinessRules.API (planned) |
 
+WebApp is also a planned consumer of `BusinessRulesSnapshotPublishedIntegrationEvent` (spec phase 4).
 Proposed changes to existing events: BusinessRules.API also consumes `OrderStatusChangedToPaidIntegrationEvent`,
 `OrderStatusChangedToShippedIntegrationEvent`, and `OrderStatusChangedToCancelledIntegrationEvent`;
 `OrderStatusChangedToPaidIntegrationEvent.OrderStockItems` excludes unfulfillable lines (partial fulfilment).

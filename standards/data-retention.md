@@ -25,6 +25,9 @@ Relevant regimes:
 | Deleted | > 7 years | Nothing. The record is hard-deleted | — |
 
 - 7 years covers CRA (6 years from tax year end) and US IRS norms.
+- Order pricing fields (`Order.Subtotal`, `DiscountTotal`, `ShippingFee`, `Total`,
+  `PricingSnapshotVersion`; `OrderItem.BasePrice`) are financial fields. They follow these tiers, and
+  the archived tier keeps them (`eShop/src/Ordering.Domain/AggregatesModel/OrderAggregate`).
 - Chargebacks can arrive up to ~540 days after purchase. After 12 months, dispute evidence relies on
   the payment provider reference and the archived fields. Confirm with the payment provider that
   this is sufficient.
@@ -40,9 +43,17 @@ Relevant regimes:
 
 ## Other data
 
+Rows for `rulesdb` and `apiusagedaily` come from the
+[runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md)
+(*Contracts → Data*). The 7-year periods there are marked as a call: confirm them during legal sign-off.
+
 | Data | Store | Retention |
 |------|-------|-----------|
 | Idempotency records (`ClientRequest`) | `orderingdb` | 30 days |
+| Create-order v1 usage counts (`ordering.apiusagedaily`; per UTC day, no personal data) | `orderingdb` | 90 days |
+| Rule versions (`RuleVersion`; no personal data) | `rulesdb` | Kept while referenced; superseded versions kept 7 years (pricing history supports financial audit) |
+| Rules audit trail (`AuditEntry`: admin user id, action, before/after, when) | `rulesdb` | 7 years |
+| Rules snapshots (`RulesSnapshotRecord`; serialized published state) | `rulesdb` | Latest, plus every version referenced by an order's `PricingSnapshotVersion`, for 7 years |
 | Outbox entries (published) | each service DB | 7 days |
 | Outbox entries (failed/unpublished) | each service DB | Until resolved; alert after 1 min (see NFRs) |
 | Basket | Redis | 30 days since last activity |

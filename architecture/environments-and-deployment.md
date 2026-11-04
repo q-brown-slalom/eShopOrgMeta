@@ -2,7 +2,7 @@
 status: Adopted
 owner: "Q Brown"
 last_reviewed: 2026-11-03
-source: eShop/src/eShop.AppHost/AppHost.cs, eShop/README.md, eShop/.github/workflows/playwright.yml
+source: eShop/src/eShop.AppHost/AppHost.cs, eShop/src/eShop.AppHost/Extensions.cs, eShop/README.md, eShop/.github/workflows/playwright.yml
 ---
 
 # Environments and deployment
@@ -42,6 +42,12 @@ flowchart LR
 | Health endpoints `/health`, `/alive` | Mapped | Not mapped (Development only), so changing this needs an ADR |
 | Interactive auth | PKCE optional locally | PKCE required |
 | AI (`UseFoundry`) | Optional | Off in Dev; on in Test and Prod |
+| Rules database `rulesdb` (BusinessRules.API) | Database on the shared Postgres container | Database on Azure Database for PostgreSQL |
+| Service-client secrets `businessrules-reader-secret` (Ordering.API → BusinessRules.API) and `businessrules-api-secret` (BusinessRules.API → Ordering.API) | Aspire secret parameters with generated, persisted values | One value per environment, managed in Azure Key Vault (Proposed) |
+
+The service-client secrets are declared in `AddBusinessRules` (`eShop/src/eShop.AppHost/Extensions.cs`)
+and passed to Identity.API, which issues the client-credentials tokens
+([ADR-0008](../decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md), Proposed).
 
 ## Open questions
 
