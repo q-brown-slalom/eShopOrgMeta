@@ -1,8 +1,8 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-03
-source: eShop appsettings.json files, Ordering.Domain, Ordering.API/Application/Validations, Catalog.API/Model, Webhooks.API
+last_reviewed: 2026-11-04
+source: eShop appsettings.json files, Ordering.Domain, Ordering.API/Application/Validations, Catalog.API/Model, Webhooks.API, eShop.BusinessRules.Client/Rules/Types, eShop.BusinessRules.Client/Pricing
 ---
 
 # Business rules catalog
@@ -20,7 +20,7 @@ first admin-app spec decides the final set.
 
 | ID | Rule | Current value | Mechanism / location | Enforced by | Admin candidate |
 |----|------|---------------|----------------------|-------------|-----------------|
-| ORD-001 | Grace period before a submitted order is validated (customer can cancel freely) | 1 minute | Config `BackgroundTaskOptions:GracePeriodTime` — `src/OrderProcessor/appsettings.json` | OrderProcessor | Yes |
+| ORD-001 | Grace period before a submitted order is validated (customer can cancel freely) | 1 minute (default); 1–60 minutes | Runtime rule `ORD-001` (BusinessRules.API), resolved per order into `Order.GracePeriodEndsAt`; default 1 min — `src/eShop.BusinessRules.Client/Rules/Types/GracePeriodRuleType.cs`, `src/Ordering.API/Application/Rules/OrderFulfilmentRulesResolver.cs` | OrderProcessor (queries `GracePeriodEndsAt`) | Yes |
 | ORD-002 | Grace-period polling interval | 30 seconds | Config `BackgroundTaskOptions:CheckUpdateTime` — same file | OrderProcessor | No |
 | ORD-003 | Order must contain at least one item | ≥ 1 | Code — `CreateOrderCommandValidator.cs` | Ordering.API | No |
 | ORD-004 | Shipping address fields required (street, city, state, country, zip) | Required | Code — `CreateOrderCommandValidator.cs` | Ordering.API | Yes — allowed shipping countries only; required fields stay in code |
@@ -32,7 +32,7 @@ first admin-app spec decides the final set.
 | ORD-010 | Order item units must be > 0; discount cannot exceed line total | — | Code — `OrderItem.cs` | Ordering.Domain | No |
 | ORD-011 | Cancellation not allowed once `Paid` or `Shipped` | — | Code — `Order.SetCancelledStatus` | Ordering.Domain | No |
 | ORD-012 | Shipping only from `Paid` | — | Code — `Order.SetShippedStatus` | Ordering.Domain | No |
-| ORD-013 | Stock shortfall policy (today: any rejected stock item cancels the whole order) | All-or-nothing | Code — `Order.SetCancelledStatusWhenStockIsRejected` | Ordering.Domain | Yes — per-offering policy: `AllOrNothing` \| `PartialFulfilment` (partial path needs a spec) |
+| ORD-013 | Stock shortfall policy: `AllOrNothing` cancels the whole order on any rejected stock item; `PartialFulfilment` drops the out-of-stock lines and reprices downward | `AllOrNothing` (default) | Runtime rule `ORD-013`, stored per order; `AllOrNothing` \| `PartialFulfilment` — `src/eShop.BusinessRules.Client/Rules/Types/StockShortfallPolicyRuleType.cs`, `Order.StockShortfallPolicy` and `Order.ApplyStockRejection` in `src/Ordering.Domain/AggregatesModel/OrderAggregate/Order.cs` | Ordering.Domain | Yes — per-offering policy |
 
 ## Catalog and inventory
 
@@ -67,24 +67,24 @@ first admin-app spec decides the final set.
 | WHK-001 | Subscribable event types | `CatalogItemPriceChange`, `OrderShipped`, `OrderPaid` | Code — `Webhooks.API/Model/WebhookType.cs` | Webhooks.API | Yes — enable/disable existing types; new types need a spec |
 | WHK-002 | Grant URL must be absolute, same origin as hook URL, and echo the `X-eshop-whtoken` token on OPTIONS | — | Code — `WebhookSubscriptionRequest.cs`, `GrantUrlTesterService.cs` | Webhooks.API | No (security) |
 
-## Pricing and fulfilment (Proposed)
+## Pricing and fulfilment
 
-Status: **Proposed** by the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md).
-That spec also moves ORD-001 (per order, 1–60 min) and ORD-013 (adds `PartialFulfilment`) to the runtime rule store. Update the rows above when it is implemented.
+Status: **Adopted** from the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (phase 2).
+The rules are evaluated in this order: PRC-001, then the best single line promotion per line, then the best single order promotion, then SHP-001 on the discounted subtotal. Nothing stacks within a level. Money is rounded to 2 decimals (`MidpointRounding.AwayFromZero`) per line. Ordering.API never calls BusinessRules.API on the request path; it reads the cached rules snapshot. An order's prices, grace period (ORD-001), and shortfall policy (ORD-013) are fixed when it is created. With no published version every rule uses its built-in default, so nothing changes for shoppers.
 
 | ID | Rule | Default | Mechanism / location | Enforced by | Admin candidate |
 |----|------|---------|----------------------|-------------|-----------------|
-| PRC-001 | Price adjustment: percent off or fixed unit price, by catalog item, type, brand, or all | None (catalog price) | Runtime rule (planned BusinessRules.API) | Ordering.API pricing | Yes |
-| PRM-001 | Promotion: line or order discount when its conditions are met; the best single promotion per level wins | None | Runtime rule (planned) | Ordering.API pricing | Yes |
-| SHP-001 | Shipping fee with optional free-shipping threshold | 0 | Runtime rule (planned) | Ordering.API pricing | Yes |
+| PRC-001 | Price adjustment: percent off (0–90 %) or fixed unit price (> 0), by catalog item, type, brand, or all. The most specific target wins (item > type > brand > all); two entries with the same target are rejected. The adjusted unit price is never below 0.01 | None (catalog price) | Runtime rule `PRC-001` (BusinessRules.API) — `src/eShop.BusinessRules.Client/Rules/Types/PriceAdjustmentRuleType.cs`, `src/eShop.BusinessRules.Client/Pricing/PricingCalculator.cs` | Ordering.API pricing (`src/Ordering.API/Application/Pricing/OrderPricingService.cs`) | Yes |
+| PRM-001 | Promotion: line or order discount when its conditions are met; label ≤ 60 characters. **Line:** an entry applies when its target matches and `minUnits` (if set) ≤ the line's units. The most specific applicable target is kept, then the highest discount wins; a tie goes to the first listed entry. Amount off is per unit and capped at the line total. **Order:** applies when the subtotal after line promotions ≥ `minSubtotal`; the highest discount wins. The amount is capped at that subtotal and split across lines in whole cents (`DiscountAllocation.Allocate`) | None | Runtime rule `PRM-001` (BusinessRules.API) — `src/eShop.BusinessRules.Client/Rules/Types/PromotionRuleType.cs`, `src/eShop.BusinessRules.Client/Pricing/PricingCalculator.cs`, `src/eShop.BusinessRules.Client/Pricing/DiscountAllocation.cs` | Ordering.API pricing | Yes |
+| SHP-001 | Shipping fee (0–100) with optional free-shipping threshold (≥ 0), compared with the subtotal after discounts | 0 | Runtime rule `SHP-001` (BusinessRules.API) — `src/eShop.BusinessRules.Client/Rules/Types/ShippingFeeRuleType.cs`, `src/eShop.BusinessRules.Client/Pricing/PricingCalculator.cs` | Ordering.API pricing | Yes |
 
 ## Known gaps (input for future specs)
 
 | ID | Gap |
 |----|-----|
-| G-01 | No pricing rules exist (promotions, tax, shipping fees). Discounts exist on order items but nothing sets them from business rules. Promotions and shipping fees are addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved); tax is not. |
+| G-01 | Tax is not modelled. (Promotions and shipping fees had no rules; the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved) addressed them.) **Phase 2 done:** PRC-001, PRM-001, and SHP-001 now set order prices and discounts from the rules snapshot (`eShop/src/eShop.BusinessRules.Client/Pricing/PricingCalculator.cs`, `eShop/src/Ordering.API/Application/Pricing`). |
 | G-02 | Catalog API has no maximum page size, so very large pages can be requested. |
-| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. Addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved). **Phase 1 done:** BusinessRules.API now has the rule store (`RuleVersion`), audit trail (`AuditEntry`), effective-dating, and versioned snapshots (`eShop/src/BusinessRules.API/Model`; [ADR-0008](../decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md), Proposed). No production rule types are registered yet; PRC-001, PRM-001, SHP-001, ORD-001, and ORD-013 arrive in phase 2. Rules are editable through the API (Scalar) until eShopAdmin ships in phase 3. |
+| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. Addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved). **Phase 1 done:** BusinessRules.API now has the rule store (`RuleVersion`), audit trail (`AuditEntry`), effective-dating, and versioned snapshots (`eShop/src/BusinessRules.API/Model`; [ADR-0008](../decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md), Proposed). **Phase 2 done:** the production rule types PRC-001, PRM-001, SHP-001, ORD-001, and ORD-013 are registered (`eShop/src/eShop.BusinessRules.Client/Rules/Types`), and Ordering.API and OrderProcessor consume them. Rules are editable through the API (Scalar) until eShopAdmin ships in phase 3. |
 | G-04 | `GrantUrlTesterService` logs the webhook token in plain text, which violates [standards/security.md](../standards/security.md). |
 | G-05 | `RestockThreshold` is stored, but no code compares stock to it. Nothing ever sets `OnReorder` to `true`; `AddStock` only resets it to `false`. The `CheckThreshold` mentioned in the `RemoveStock` docs doesn't exist. |
 | G-06 | Card data is stored in violation of PCI DSS: plain-text card number in `PaymentMethod` (`orderingdb`), and card number plus security code in `ApplicationUser` (`identitydb`). Fix: [ADR-0007](../decisions/0007-tokenize-card-data.md). |

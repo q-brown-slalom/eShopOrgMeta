@@ -1,7 +1,7 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 decisions: [ADR-0006, ADR-0007]
 ---
 
@@ -28,6 +28,10 @@ Relevant regimes:
 - Order pricing fields (`Order.Subtotal`, `DiscountTotal`, `ShippingFee`, `Total`,
   `PricingSnapshotVersion`; `OrderItem.BasePrice`) are financial fields. They follow these tiers, and
   the archived tier keeps them (`eShop/src/Ordering.Domain/AggregatesModel/OrderAggregate`).
+- Order fulfilment and promotion columns follow the same tiers, and the archived tier keeps them. They hold
+  no personal data, and they explain the archived totals (`eShop/src/Ordering.Infrastructure/Migrations/*AddOrderFulfilmentRules*`):
+  - `Order.GracePeriodEndsAt` (ORD-001 result, fixed at creation) and `Order.StockShortfallPolicy` (ORD-013 result).
+  - `OrderItem.IsUnfulfillable` (line dropped by partial fulfilment), `OrderItem.OrderDiscountShare` (part of `Discount` from the order promotion), and `OrderItem.PromotionLabel` (promotion label, ≤ 60 characters, no personal data).
 - Chargebacks can arrive up to ~540 days after purchase. After 12 months, dispute evidence relies on
   the payment provider reference and the archived fields. Confirm with the payment provider that
   this is sufficient.
