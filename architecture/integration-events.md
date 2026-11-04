@@ -1,8 +1,8 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-03
-source: eShop/src/*/Extensions/Extensions.cs (AddSubscription), eShop/src/PaymentProcessor/Program.cs, eShop/src/BusinessRules.API/Services/RulePublishingService.cs
+last_reviewed: 2026-11-04
+source: eShop/src/*/Extensions/Extensions.cs (AddSubscription), eShop/src/PaymentProcessor/Program.cs, eShop/src/BusinessRules.API/Services/RulePublishingService.cs, eShop/src/Ordering.Domain/AggregatesModel/OrderAggregate/Order.cs
 ---
 
 # Integration events
@@ -47,6 +47,10 @@ stateDiagram-v2
 
 Rules enforced by the aggregate: cannot cancel once `Paid` or `Shipped`; can only ship from `Paid`.
 
+`OrderStatusChangedToPaidIntegrationEvent.OrderStockItems` excludes unfulfillable lines (partial fulfilment), so Catalog.API only decrements stock for lines that ship (`Order.SetPaidStatus` in `eShop/src/Ordering.Domain/AggregatesModel/OrderAggregate/Order.cs`).
+
+Under `PartialFulfilment` (ORD-013), `OrderStockRejected` does not cancel the order. The rejected lines are marked unfulfillable, the order is repriced downward, and it moves to `StockConfirmed` (`Order.ApplyStockRejection`). A rejection that names every line still cancels the order. A rejection that arrives after the order has left `AwaitingValidation` is ignored.
+
 When adding or changing an event, update this file in the same spec/PR.
 
 ## Proposed events
@@ -58,6 +62,5 @@ From the Approved [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-bu
 | `OrderPricedIntegrationEvent` | Ordering.API | BusinessRules.API (planned) |
 
 WebApp is also a planned consumer of `BusinessRulesSnapshotPublishedIntegrationEvent` (spec phase 4).
-Proposed changes to existing events: BusinessRules.API also consumes `OrderStatusChangedToPaidIntegrationEvent`,
-`OrderStatusChangedToShippedIntegrationEvent`, and `OrderStatusChangedToCancelledIntegrationEvent`;
-`OrderStatusChangedToPaidIntegrationEvent.OrderStockItems` excludes unfulfillable lines (partial fulfilment).
+Proposed change to existing events: BusinessRules.API also consumes `OrderStatusChangedToPaidIntegrationEvent`,
+`OrderStatusChangedToShippedIntegrationEvent`, and `OrderStatusChangedToCancelledIntegrationEvent`.
