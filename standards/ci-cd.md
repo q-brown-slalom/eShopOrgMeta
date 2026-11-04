@@ -30,7 +30,7 @@ eShopAdmin copies the baseline with these differences (`eShopAdmin/.github/workf
 | `playwright.yml` | Checks out eShop (repository variable `ESHOP_REPOSITORY`, branch `main`) into `eshop/`, starts eShop's AppHost in the background, waits for Identity.API and BusinessRules.API, then runs `npm run test:e2e` (Playwright starts eShopAdmin's AppHost) and uploads the report (30 days). See [ADR-0009](../decisions/0009-per-repo-apphost-with-external-services.md) | `eShopAdmin/.github/workflows/playwright.yml` |
 | `markdownlint.yml` | Lints all Markdown with the repo's `.markdownlint.json`; runs on every pull request | `eShopAdmin/.github/workflows/markdownlint.yml` |
 
-These workflows have not run yet: the repo has no remote.
+These workflows have not run yet because eShopAdmin has no remote yet.
 
 ## Deployment
 
