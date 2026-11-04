@@ -2,7 +2,7 @@
 status: Adopted
 owner: "Q Brown"
 last_reviewed: 2026-11-04
-source: eShop appsettings.json files, Ordering.Domain, Ordering.API/Application/Validations, Catalog.API/Model, Webhooks.API, eShop.BusinessRules.Client/Rules/Types, eShop.BusinessRules.Client/Pricing
+source: eShop appsettings.json files, Ordering.Domain, Ordering.API/Application/Validations, Catalog.API/Model, Webhooks.API, eShop.BusinessRules.Client/Rules/Types, eShop.BusinessRules.Client/Pricing, eShopAdmin/src/eShopAdmin/Components/Pages/Rules/RulesIndex.razor
 ---
 
 # Business rules catalog
@@ -84,7 +84,7 @@ The rules are evaluated in this order: PRC-001, then the best single line promot
 |----|-----|
 | G-01 | Tax is not modelled. (Promotions and shipping fees had no rules; the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved) addressed them.) **Phase 2 done:** PRC-001, PRM-001, and SHP-001 now set order prices and discounts from the rules snapshot (`eShop/src/eShop.BusinessRules.Client/Pricing/PricingCalculator.cs`, `eShop/src/Ordering.API/Application/Pricing`). |
 | G-02 | Catalog API has no maximum page size, so very large pages can be requested. |
-| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. Addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved). **Phase 1 done:** BusinessRules.API now has the rule store (`RuleVersion`), audit trail (`AuditEntry`), effective-dating, and versioned snapshots (`eShop/src/BusinessRules.API/Model`; [ADR-0008](../decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md), Proposed). **Phase 2 done:** the production rule types PRC-001, PRM-001, SHP-001, ORD-001, and ORD-013 are registered (`eShop/src/eShop.BusinessRules.Client/Rules/Types`), and Ordering.API and OrderProcessor consume them. Rules are editable through the API (Scalar) until eShopAdmin ships in phase 3. |
+| G-03 | All rules are deploy-time config or code. There is no runtime rule store, audit trail, or effective-dating. The admin app needs all three. Addressed by the [runtime rules spec](../specs/cross-repo/2026-11-03-runtime-business-rules-and-experiments-design.md) (Approved). **Phase 1 done:** BusinessRules.API now has the rule store (`RuleVersion`), audit trail (`AuditEntry`), effective-dating, and versioned snapshots (`eShop/src/BusinessRules.API/Model`; [ADR-0008](../decisions/0008-runtime-business-rules-service-and-in-house-experimentation.md), Proposed). **Phase 2 done:** the production rule types PRC-001, PRM-001, SHP-001, ORD-001, and ORD-013 are registered (`eShop/src/eShop.BusinessRules.Client/Rules/Types`), and Ordering.API and OrderProcessor consume them. Rules are editable in eShopAdmin (`/rules`) or through the API (Scalar). |
 | G-04 | `GrantUrlTesterService` logs the webhook token in plain text, which violates [standards/security.md](../standards/security.md). |
 | G-05 | `RestockThreshold` is stored, but no code compares stock to it. Nothing ever sets `OnReorder` to `true`; `AddStock` only resets it to `false`. The `CheckThreshold` mentioned in the `RemoveStock` docs doesn't exist. |
 | G-06 | Card data is stored in violation of PCI DSS: plain-text card number in `PaymentMethod` (`orderingdb`), and card number plus security code in `ApplicationUser` (`identitydb`). Fix: [ADR-0007](../decisions/0007-tokenize-card-data.md). |

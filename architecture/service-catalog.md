@@ -54,4 +54,5 @@ Event details: [integration-events.md](integration-events.md).
   `EShopAdminClient`, which registers the `eshopadmin` client
   (`eShop/src/Identity.API/Configuration/Config.cs`). See
   [environments-and-deployment.md](environments-and-deployment.md#configuration-differences).
-- eShopAdmin is T3 with no data store. No T1 service references it.
+- eShopAdmin is T3 with no data store. No T1 service depends on eShopAdmin at runtime (Identity.API only
+  registers its client URI through the `eshopadmin-url` parameter).
