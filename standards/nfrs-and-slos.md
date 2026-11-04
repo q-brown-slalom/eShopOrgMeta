@@ -1,7 +1,7 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 # Non-functional requirements and SLOs
@@ -17,7 +17,7 @@ Specs must state which NFR tier each changed service falls in. They must also ju
 |------|----------|------------------------|--------------|
 | T1 — revenue path | WebApp, Catalog.API, Basket.API, Ordering.API, Identity.API, mobile-bff | 99.9% | ~43 min/month |
 | T2 — async processing | OrderProcessor, PaymentProcessor, Webhooks.API | 99.5% | ~3.6 h/month |
-| T3 — internal/admin | WebhookClient, BusinessRules.API, business-rules admin app (planned) | 99.0% | ~7.2 h/month |
+| T3 — internal/admin | WebhookClient, BusinessRules.API, eShopAdmin | 99.0% | ~7.2 h/month |
 
 BusinessRules.API can be T3 because no T1 service depends on it at request time. Ordering.API prices
 from a cached rules snapshot and falls back to built-in defaults when the service is down

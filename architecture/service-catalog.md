@@ -1,8 +1,8 @@
 ---
 status: Adopted
 owner: "Q Brown"
-last_reviewed: 2026-11-03
-source: eShop/src/eShop.AppHost/AppHost.cs, eShop/src/eShop.AppHost/Extensions.cs, eShop/src/*
+last_reviewed: 2026-11-04
+source: eShop/src/eShop.AppHost/AppHost.cs, eShop/src/eShop.AppHost/Extensions.cs, eShop/src/Identity.API/Configuration/Config.cs, eShop/src/*
 ---
 
 # Service catalog
@@ -21,6 +21,7 @@ source: eShop/src/eShop.AppHost/AppHost.cs, eShop/src/eShop.AppHost/Extensions.c
 | WebApp | eShop | Blazor storefront | HTTP | — | Consumes | Q Brown |
 | mobile-bff | eShop | YARP reverse proxy | HTTP | — | — | Q Brown |
 | ClientApp / HybridApp | eShop | .NET MAUI clients | — | — | — | Q Brown |
+| eShopAdmin | eShopAdmin | Blazor Web App (static SSR); T3; calls BusinessRules.API admin v1, Catalog.API, Identity.API | HTTP | — (no data store; auth cookie only) | — | Q Brown |
 
 Shared libraries (eShop): `eShop.ServiceDefaults`, `EventBus`, `EventBusRabbitMQ`,
 `IntegrationEventLogEF`, `WebAppComponents`, `Shared`, `eShop.BusinessRules.Client` (snapshot cache,
@@ -44,3 +45,14 @@ pricing calculator, quote DTOs, service-token handler).
   `rules.snapshot.age_seconds`), and `eShop.Ordering` (`eShop/src/eShop.ServiceDefaults/Extensions.cs`).
 
 Event details: [integration-events.md](integration-events.md).
+
+## eShopAdmin ([ADR-0009](../decisions/0009-per-repo-apphost-with-external-services.md), Proposed)
+
+- eShopAdmin is its own repo with its own AppHost. It reaches Identity.API, BusinessRules.API, and
+  Catalog.API through `AddExternalService` resources whose URLs are the parameters `identity-url`,
+  `businessrules-url`, and `catalog-url`. eShop's AppHost passes `eshopadmin-url` to Identity.API as
+  `EShopAdminClient`, which registers the `eshopadmin` client
+  (`eShop/src/Identity.API/Configuration/Config.cs`). See
+  [environments-and-deployment.md](environments-and-deployment.md#configuration-differences).
+- eShopAdmin is T3 with no data store. No T1 service depends on eShopAdmin at runtime (Identity.API only
+  registers its client URI through the `eshopadmin-url` parameter).
